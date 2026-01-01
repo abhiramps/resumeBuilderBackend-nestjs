@@ -1,48 +1,22 @@
 import { Injectable, Logger } from '@nestjs/common';
-import puppeteer, { Browser } from 'puppeteer-core';
-import chromium from '@sparticuz/chromium';
+import puppeteer, { Browser } from 'puppeteer';
 
 @Injectable()
 export class ExportService {
     private readonly logger = new Logger(ExportService.name);
 
     private async getBrowser(): Promise<Browser> {
-        const isOffline = process.env.IS_OFFLINE;
-        const isLambda = !isOffline && (process.env.AWS_LAMBDA_FUNCTION_VERSION || process.env.AWS_EXECUTION_ENV);
-
-        let executablePath: string;
-        let args: string[] = [];
-
-        if (isLambda) {
-            this.logger.log('Running in Lambda environment');
-            executablePath = await chromium.executablePath();
-
-            if (!executablePath) {
-                throw new Error('Chromium executable path is undefined');
-            }
-
-            args = [
-                ...chromium.args,
-                '--disable-dev-shm-usage',
-                '--single-process',
-            ];
-        } else {
-            this.logger.log('Running in local environment');
-            const platform = process.platform;
-            if (platform === 'darwin') {
-                executablePath = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
-            } else if (platform === 'win32') {
-                executablePath = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
-            } else {
-                executablePath = '/usr/bin/google-chrome';
-            }
-        }
-
         return puppeteer.launch({
-            args,
-            defaultViewport: { width: 1920, height: 1080 },
-            executablePath,
             headless: true,
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-accelerated-2d-canvas',
+                '--no-first-run',
+                '--no-zygote',
+                '--disable-gpu',
+            ],
         });
     }
 
@@ -108,6 +82,9 @@ export class ExportService {
             });
 
             return Buffer.from(pdfBuffer);
+        } catch (error) {
+            this.logger.error('Failed to generate PDF:', error);
+            throw error;
         } finally {
             if (browser) {
                 await browser.close();

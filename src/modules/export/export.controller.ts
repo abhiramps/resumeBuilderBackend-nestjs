@@ -1,12 +1,13 @@
-import { Controller, Post, Body, Res } from '@nestjs/common';
+import { Controller, Post, Body, Res, Logger } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { Response } from 'express';
 import { ExportService } from './export.service';
-import { Logger } from 'winston';
 
 @ApiTags('export')
 @Controller('resumes/export')
 export class ExportController {
+    private readonly logger = new Logger(ExportController.name);
+
     constructor(private readonly exportService: ExportService) { }
 
     @Post()
@@ -23,16 +24,16 @@ export class ExportController {
                 return;
             }
 
-            console.log('Generating PDF...');
+            this.logger.log('Generating PDF...');
             const pdfBuffer = await this.exportService.generatePdf(html, css || '');
 
-            console.log('PDF generated successfully, size:', pdfBuffer.length);
+            this.logger.log(`PDF generated successfully, size: ${pdfBuffer.length} bytes`);
 
             res.setHeader('Content-Type', 'application/pdf');
             res.setHeader('Content-Disposition', 'attachment; filename="resume.pdf"');
             res.send(pdfBuffer);
         } catch (error) {
-            console.error('Export handler error:', error);
+            this.logger.error('Export handler error:', error);
             res.status(500).json({
                 success: false,
                 message: 'Failed to generate PDF',

@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, Logger } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
 import * as express from 'express';
@@ -8,6 +8,7 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 
 async function bootstrap() {
+    const logger = new Logger('Bootstrap');
     const app = await NestFactory.create(AppModule);
 
     // Increase JSON body size limit for large HTML/CSS payloads
@@ -58,8 +59,8 @@ async function bootstrap() {
 
     const port = process.env.PORT || 3001;
     await app.listen(port);
-    console.log(`🚀 Application is running on: http://localhost:${port}`);
-    console.log(`📚 API Documentation: http://localhost:${port}/api/docs`);
+    logger.log(`🚀 Application is running on: http://localhost:${port}`);
+    logger.log(`📚 API Documentation: http://localhost:${port}/api/docs`);
 }
 
 bootstrap();

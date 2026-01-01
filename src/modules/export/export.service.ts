@@ -1,9 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import puppeteer, { Browser } from 'puppeteer-core';
 import chromium from '@sparticuz/chromium';
 
 @Injectable()
 export class ExportService {
+    private readonly logger = new Logger(ExportService.name);
+
     private async getBrowser(): Promise<Browser> {
         const isOffline = process.env.IS_OFFLINE;
         const isLambda = !isOffline && (process.env.AWS_LAMBDA_FUNCTION_VERSION || process.env.AWS_EXECUTION_ENV);
@@ -12,7 +14,7 @@ export class ExportService {
         let args: string[] = [];
 
         if (isLambda) {
-            console.log('Running in Lambda environment');
+            this.logger.log('Running in Lambda environment');
             executablePath = await chromium.executablePath();
 
             if (!executablePath) {
@@ -25,7 +27,7 @@ export class ExportService {
                 '--single-process',
             ];
         } else {
-            console.log('Running in local environment');
+            this.logger.log('Running in local environment');
             const platform = process.platform;
             if (platform === 'darwin') {
                 executablePath = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
